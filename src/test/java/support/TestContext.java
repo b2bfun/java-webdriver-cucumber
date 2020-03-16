@@ -1,7 +1,7 @@
-// Created by Viacheslav (Slava) Skryabin 04/01/2011
 package support;
 
 import io.github.bonigarcia.wdm.WebDriverManager;
+import org.openqa.selenium.Platform;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -9,12 +9,16 @@ import org.openqa.selenium.edge.EdgeDriver;
 import org.openqa.selenium.firefox.FirefoxBinary;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
-import org.openqa.selenium.ie.InternetExplorerDriver;
+import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.remote.BrowserType;
-import org.openqa.selenium.Platform;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
+import org.openqa.selenium.support.ui.WebDriverWait;
+import org.yaml.snakeyaml.Yaml;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
@@ -36,6 +40,35 @@ public class TestContext {
         driver.quit();
     }
 
+    public static WebDriverWait getWait(){
+        return new WebDriverWait(getDriver(), 10);
+    }
+
+    public static WebDriverWait getWait(int timeout){
+        return new WebDriverWait(getDriver(), timeout);
+    }
+
+    public static Actions getActions() {
+        return new Actions(getDriver());
+    }
+
+    public static HashMap<String, String> getSender() throws FileNotFoundException {
+        return getData("sender");
+    }
+    public static HashMap<String, String> getReceiver() throws FileNotFoundException {
+        return getData("receiver");
+    }
+
+    public static HashMap<String, String> getData(String fileName) throws FileNotFoundException {
+        String path = System.getProperty("user.dir") + "/src/test/resources/data/" + fileName + ".yml";
+        File file = new File(path);
+
+        FileInputStream stream = new FileInputStream(file);
+        Yaml yaml = new Yaml();
+
+        return yaml.load(stream);
+    }
+
     public static void initialize(String browser, boolean isHeadless) {
         switch (browser) {
             case "chrome":
@@ -51,6 +84,7 @@ public class TestContext {
                 chromeOptions.addArguments("--start-maximized");
                 chromeOptions.setExperimentalOption("prefs", chromePreferences);
                 System.setProperty("webdriver.chrome.silentOutput", "true");
+                //chromeOptions.setPageLoadStrategy(PageLoadStrategy.NONE);
                 if (isHeadless) {
                     chromeOptions.setHeadless(true);
                     chromeOptions.addArguments("--window-size=1920,1080");
@@ -72,10 +106,6 @@ public class TestContext {
                 WebDriverManager.edgedriver().setup();
                 driver = new EdgeDriver();
                 break;
-            case "ie":
-                WebDriverManager.iedriver().setup();
-                driver = new InternetExplorerDriver();
-                break;
             case "grid":
                 DesiredCapabilities capabilities = new DesiredCapabilities();
                 capabilities.setBrowserName(BrowserType.CHROME);
@@ -92,4 +122,5 @@ public class TestContext {
                 throw new RuntimeException("Driver is not implemented for: " + browser);
         }
     }
+
 }
